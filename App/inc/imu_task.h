@@ -7,5 +7,6 @@
 #define INS_PITCH_ADDRESS_OFFSET  1
 #define INS_ROLL_ADDRESS_OFFSET   2
 
+extern float imuAngle[3];
 
 #endif
