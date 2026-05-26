@@ -3,6 +3,7 @@
 #include "usbd_cdc_if.h"
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
 
 #define PI_F 3.14159265358979323846f
 
@@ -78,12 +79,11 @@ void StartVisionTask(void const * argument)
     float delta_y_lpf = 0.0f;
     float target_yaw = 0.0f;
     uint8_t vision_active = 0;
-    uint8_t x_centered_cnt = 0;
     uint32_t vision_lost_cnt = 0;
     uint8_t target_yaw_inited = 0;
 
-    PID_Init(&x_pid, 11000.0f, 0.000f, 0.000f, 5000000.0f);
-    PID_Init(&y_pid, 0.00000040f, 0.00000010f, 0.00000020f, 500.0f);
+    PID_Init(&x_pid, 0.1100f, 0.0676f, 0.0592f, 500.0f);
+    PID_Init(&y_pid, 0.0500f, 0.0200f, 0.0100f, 500.0f);
 
     for (;;)
     {
@@ -91,34 +91,17 @@ void StartVisionTask(void const * argument)
         uint8_t new_frame = parse_frame(&vis_data);
 
         if (new_frame) {
-            uint8_t ack[] = "RECEIVE_OK\r\n";
-            CDC_Transmit_HS(ack, sizeof(ack) - 1);
-
             if (vis_data.mode == VISION_MODE_RUN) {
+                float dx = vis_data.delta_x * 1000.0f;
+                float dy = vis_data.delta_y * 1000.0f;
                 if (!vision_active) {
-                    delta_x_lpf = vis_data.delta_x;
-                    delta_y_lpf = vis_data.delta_y;
+                    delta_x_lpf = dx;
+                    delta_y_lpf = dy;
                     PID_Reset(&x_pid);
                     PID_Reset(&y_pid);
                 } else {
-                    delta_x_lpf = delta_x_lpf * (1.0f - VISION_LPF_ALPHA) + vis_data.delta_x * VISION_LPF_ALPHA;
-                    delta_y_lpf = delta_y_lpf * (1.0f - VISION_LPF_ALPHA) + vis_data.delta_y * VISION_LPF_ALPHA;
-                }
-
-                /* X dead zone with center-hold */
-                if (fabsf(delta_x_lpf) < X_DEAD_ZONE) {
-                    x_centered_cnt++;
-                    if (x_centered_cnt >= X_CENTER_HOLD_CNT) {
-                        delta_x_lpf = 0.0f;
-                        PID_Reset(&x_pid);
-                    }
-                } else {
-                    x_centered_cnt = 0;
-                }
-
-                /* Y dead zone */
-                if (fabsf(delta_y_lpf) < Y_DEAD_ZONE) {
-                    delta_y_lpf = 0.0f;
+                    delta_x_lpf = delta_x_lpf * (1.0f - VISION_LPF_ALPHA) + dx * VISION_LPF_ALPHA;
+                    delta_y_lpf = delta_y_lpf * (1.0f - VISION_LPF_ALPHA) + dy * VISION_LPF_ALPHA;
                 }
 
                 vision_active = 1;
@@ -152,12 +135,8 @@ void StartVisionTask(void const * argument)
             PID_Update(&x_pid, 0.0f, delta_x_lpf, 0.0025f);
             PID_Update(&y_pid, 0.0f, -delta_y_lpf, 0.0025f);
 
-            if (x_centered_cnt >= X_CENTER_HOLD_CNT) {
-                target_yaw = imuAngle[INS_YAW_ADDRESS_OFFSET];
-            } else {
-                float yaw_rate = x_pid.out * OUTER_YAW_GAIN;
-                target_yaw = normalize_angle_rad(target_yaw + yaw_rate * 0.0025f);
-            }
+            float yaw_rate = x_pid.out * OUTER_YAW_GAIN;
+            target_yaw = normalize_angle_rad(target_yaw + yaw_rate * 0.0025f);
 
             vision_output.target_yaw = target_yaw;
             vision_output.pitch_cmd = y_pid.out;
