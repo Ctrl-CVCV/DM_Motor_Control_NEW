@@ -127,7 +127,7 @@ virtualFolder:
       files:
         - path: ../App/imu_task.c
         - path: ../App/fun_test_task.c
-        - path: ../App/motor_task.c
+        - path: ../App/vision_task.c
       folders: []
     - name: Algprithm
       files:

@@ -54,8 +54,10 @@ osStaticThreadDef_t ImuTaskControlBlock;
 osThreadId FunTestHandle;
 uint32_t FunTestBuffer[ 128 ];
 osStaticThreadDef_t FunTestControlBlock;
-osThreadId MotorTaskHandle;
+osThreadId VisionTaskHandle;
+osMessageQId RXQueneHandle;
 osSemaphoreId IMUSemHandle;
+osSemaphoreId MotorSemHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -65,7 +67,7 @@ osSemaphoreId IMUSemHandle;
 void StartDefaultTask(void const * argument);
 void ImuTask_Entry(void const * argument);
 void FunTest_Entry(void const * argument);
-void StartMotorTask(void const * argument);
+void StartVisionTask(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -121,6 +123,10 @@ void MX_FREERTOS_Init(void) {
   osSemaphoreDef(IMUSem);
   IMUSemHandle = osSemaphoreCreate(osSemaphore(IMUSem), 1);
 
+  /* definition and creation of MotorSem */
+  osSemaphoreDef(MotorSem);
+  MotorSemHandle = osSemaphoreCreate(osSemaphore(MotorSem), 1);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
@@ -128,6 +134,11 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* definition and creation of RXQuene */
+  osMessageQDef(RXQuene, 16, uint16_t);
+  RXQueneHandle = osMessageCreate(osMessageQ(RXQuene), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -146,9 +157,9 @@ void MX_FREERTOS_Init(void) {
   osThreadStaticDef(FunTest, FunTest_Entry, osPriorityBelowNormal, 0, 128, FunTestBuffer, &FunTestControlBlock);
   FunTestHandle = osThreadCreate(osThread(FunTest), NULL);
 
-  /* definition and creation of MotorTask */
-  osThreadDef(MotorTask, StartMotorTask, osPriorityHigh, 0, 512);
-  MotorTaskHandle = osThreadCreate(osThread(MotorTask), NULL);
+  /* definition and creation of VisionTask */
+  osThreadDef(VisionTask, StartVisionTask, osPriorityHigh, 0, 512);
+  VisionTaskHandle = osThreadCreate(osThread(VisionTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -212,22 +223,22 @@ __weak void FunTest_Entry(void const * argument)
   /* USER CODE END FunTest_Entry */
 }
 
-/* USER CODE BEGIN Header_StartMotorTask */
+/* USER CODE BEGIN Header_StartVisionTask */
 /**
-* @brief Function implementing the MotorTask thread.
+* @brief Function implementing the VisionTask thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartMotorTask */
-__weak void StartMotorTask(void const * argument)
+/* USER CODE END Header_StartVisionTask */
+__weak void StartVisionTask(void const * argument)
 {
-  /* USER CODE BEGIN StartMotorTask */
+  /* USER CODE BEGIN StartVisionTask */
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
-  /* USER CODE END StartMotorTask */
+  /* USER CODE END StartVisionTask */
 }
 
 /* Private application code --------------------------------------------------*/

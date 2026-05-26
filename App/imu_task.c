@@ -3,6 +3,7 @@
 #include "MahonyAHRS.h"
 #include "tim.h"
 #include "vofa.h"
+#include "vision_task.h"
 #include "jc4310.h"
 #include "can_bsp.h"
 #include "pid.h"
@@ -89,7 +90,7 @@ void ImuTask_Entry(void const * argument)
 
     jc_enter_closed_loop(&hfdcan1, MOTOR1_ID);
     osDelay(50);
-    //jc_enter_closed_loop(&hfdcan2, MOTOR2_ID);
+    jc_enter_closed_loop(&hfdcan2, MOTOR2_ID);
     osDelay(50);
     jc_set_control_mode(&hfdcan1, MOTOR1_ID, JC_MODE_SPEED);
     osDelay(50);
@@ -120,15 +121,17 @@ void ImuTask_Entry(void const * argument)
         if (out < 0) out = 0.f;
         htim3.Instance->CCR4 = (uint16_t)out;
 
-        vofa_send_data(0, imuAngle[0]);
+        /*vofa_send_data(0, imuAngle[0]);
         vofa_send_data(1, imuAngle[1]);
         vofa_send_data(2, imuAngle[2]);
-        vofa_sendframetail();
+        vofa_sendframetail();*/
 
-        /* YAW angle closed-loop: angle-wrapped error → PID → rpm_x100 */
-        float yaw_error = angle_diff_rad(yaw_target, imuAngle[INS_YAW_ADDRESS_OFFSET]);
+        /* Use vision target_yaw when active, otherwise hold initial yaw */
+        float yaw_setpoint = vision_output.active ? vision_output.target_yaw : yaw_target;
+        float yaw_error = angle_diff_rad(yaw_setpoint, imuAngle[INS_YAW_ADDRESS_OFFSET]);
         PID_Update(&yaw_pid, yaw_error, 0.0f, 0.001f);
-        //jc_set_speed_rpm_x100(&hfdcan1, MOTOR2_ID, (int32_t)(yaw_pid.out * 100));
+        jc_set_speed_rpm_x100(&hfdcan1, MOTOR1_ID, (int32_t)(yaw_pid.out * 100));
+        jc_set_speed_rpm_x100(&hfdcan2, MOTOR2_ID, (int32_t)(vision_output.pitch_cmd * 100));
 
         osDelay(1);
     }
