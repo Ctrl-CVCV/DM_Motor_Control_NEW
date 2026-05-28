@@ -1,11 +1,13 @@
 #include "vision_task.h"
 #include "imu_task.h"
 #include "usbd_cdc_if.h"
+#include "jc4310.h"
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
 
 #define PI_F 3.14159265358979323846f
+#define MOTOR2_ID  0x01
 
 CDC_RxRingBuffer cdc_rx_buf = {0};
 VisionOutput vision_output = {0};
@@ -78,12 +80,14 @@ void StartVisionTask(void const * argument)
     float delta_x_lpf = 0.0f;
     float delta_y_lpf = 0.0f;
     float target_yaw = 0.0f;
+    float target_pitch_x100 = 0.0f;
     uint8_t vision_active = 0;
     uint32_t vision_lost_cnt = 0;
     uint8_t target_yaw_inited = 0;
+    uint8_t target_pitch_inited = 0;
 
-    PID_Init(&x_pid, 0.1100f, 0.0676f, 0.0592f, 500.0f);
-    PID_Init(&y_pid, 0.0500f, 0.0200f, 0.0100f, 500.0f);
+    PID_Init(&x_pid, 0.75f, 0.00f, 0.23f, 50000.0f);
+    PID_Init(&y_pid, 0.300f, 0.0000f, 0.1000f, 500.0f);
 
     for (;;)
     {
@@ -91,6 +95,9 @@ void StartVisionTask(void const * argument)
         uint8_t new_frame = parse_frame(&vis_data);
 
         if (new_frame) {
+            uint8_t ack[] = "RECEIVE_OK\r\n";
+            CDC_Transmit_HS(ack, sizeof(ack) - 1);
+
             if (vis_data.mode == VISION_MODE_RUN) {
                 float dx = vis_data.delta_x * 1000.0f;
                 float dy = vis_data.delta_y * 1000.0f;
@@ -126,24 +133,37 @@ void StartVisionTask(void const * argument)
 
         /* ── 3. Run outer PID every cycle (400Hz) ── */
         if (vision_active) {
-            /* Init target_yaw from current IMU yaw on first activation */
             if (!target_yaw_inited) {
                 target_yaw = imuAngle[INS_YAW_ADDRESS_OFFSET];
                 target_yaw_inited = 1;
+            }
+            if (!target_pitch_inited) {
+                target_pitch_x100 = 27000.0f;
+                target_pitch_inited = 1;
             }
 
             PID_Update(&x_pid, 0.0f, delta_x_lpf, 0.0025f);
             PID_Update(&y_pid, 0.0f, -delta_y_lpf, 0.0025f);
 
             float yaw_rate = x_pid.out * OUTER_YAW_GAIN;
+            if (fabsf(delta_x_lpf) > YAW_LARGE_ERR_THRESH) yaw_rate *= YAW_LARGE_ERR_SCALE;
             target_yaw = normalize_angle_rad(target_yaw + yaw_rate * 0.0025f);
 
+            float pitch_rate = y_pid.out * OUTER_PITCH_GAIN;
+            target_pitch_x100 += pitch_rate * 0.0025f * 18000.0f / PI_F;
+            if (target_pitch_x100 > 36000.0f) target_pitch_x100 = 36000.0f;
+            if (target_pitch_x100 < 18000.0f) target_pitch_x100 = 18000.0f;
+
             vision_output.target_yaw = target_yaw;
-            vision_output.pitch_cmd = y_pid.out;
+            vision_output.target_pitch = target_pitch_x100;
             vision_output.active = 1;
+
+            jc_set_abs_angle_x100(&hfdcan2, MOTOR2_ID, (int32_t)target_pitch_x100);
         } else {
             vision_output.active = 0;
             target_yaw_inited = 0;
+            target_pitch_inited = 0;
+            jc_set_abs_angle_x100(&hfdcan2, MOTOR2_ID, 27000);
         }
 
         osDelay(2);

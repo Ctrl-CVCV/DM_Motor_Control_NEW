@@ -21,7 +21,10 @@
 #define Y_DEAD_ZONE             80.0f
 #define X_CENTER_HOLD_CNT       3
 #define VISION_LOST_CYCLES      100
-#define OUTER_YAW_GAIN          0.0010f
+#define OUTER_YAW_GAIN           0.0050f
+#define OUTER_PITCH_GAIN         0.0100f
+#define YAW_LARGE_ERR_THRESH     100.0f   /* delta_x_lpf量程0~1000，100=10%偏离 */
+#define YAW_LARGE_ERR_SCALE      0.5f     /* 大误差时转速缩放比 */
 
 typedef struct {
     uint8_t buffer[CDC_RX_BUF_SIZE];
@@ -37,7 +40,7 @@ typedef struct {
 
 typedef struct {
     float target_yaw;
-    float pitch_cmd;
+    float target_pitch;
     uint8_t active;
 } VisionOutput;
 

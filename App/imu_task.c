@@ -18,6 +18,7 @@
 #define MOTOR1_ID               0x01
 #define MOTOR2_ID               0x01
 #define JC_MODE_SPEED           0x01
+#define JC_MODE_POSITION        0x02
 
 float gyro[3] = {0.0f};
 float acc[3] = {0.0f};
@@ -94,7 +95,11 @@ void ImuTask_Entry(void const * argument)
     osDelay(50);
     jc_set_control_mode(&hfdcan1, MOTOR1_ID, JC_MODE_SPEED);
     osDelay(50);
-    jc_set_control_mode(&hfdcan2, MOTOR2_ID, JC_MODE_SPEED);
+    jc_set_control_mode(&hfdcan2, MOTOR2_ID, JC_MODE_POSITION);
+    osDelay(50);
+    jc_set_abs_angle_x100(&hfdcan2, MOTOR2_ID, 27000);
+    osDelay(50);
+    jc_set_abs_angle_x100(&hfdcan1, MOTOR1_ID, 19500);
     osDelay(50);
 
     /* Let IMU readings settle, then lock current yaw as target */
@@ -131,8 +136,6 @@ void ImuTask_Entry(void const * argument)
         float yaw_error = angle_diff_rad(yaw_setpoint, imuAngle[INS_YAW_ADDRESS_OFFSET]);
         PID_Update(&yaw_pid, yaw_error, 0.0f, 0.001f);
         jc_set_speed_rpm_x100(&hfdcan1, MOTOR1_ID, (int32_t)(yaw_pid.out * 100));
-        jc_set_speed_rpm_x100(&hfdcan2, MOTOR2_ID, (int32_t)(vision_output.pitch_cmd * 100));
-
         osDelay(1);
     }
     /* USER CODE END ImuTask_Entry */
