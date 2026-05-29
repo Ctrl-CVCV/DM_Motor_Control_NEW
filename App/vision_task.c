@@ -86,8 +86,8 @@ void StartVisionTask(void const * argument)
     uint8_t target_yaw_inited = 0;
     uint8_t target_pitch_inited = 0;
 
-    PID_Init(&x_pid, 0.75f, 0.00f, 0.23f, 50000.0f);
-    PID_Init(&y_pid, 0.300f, 0.0000f, 0.1000f, 500.0f);
+    PID_Init(&x_pid, 0.180f, 0.00f, 0.040f, 50000.0f);
+    PID_Init(&y_pid, 0.1000f, 0.0000f, 0.030f, 500.0f);
 
     for (;;)
     {
@@ -146,10 +146,11 @@ void StartVisionTask(void const * argument)
             PID_Update(&y_pid, 0.0f, -delta_y_lpf, 0.0025f);
 
             float yaw_rate = x_pid.out * OUTER_YAW_GAIN;
-            if (fabsf(delta_x_lpf) > YAW_LARGE_ERR_THRESH) yaw_rate *= YAW_LARGE_ERR_SCALE;
+            if (fabsf(delta_x_lpf) < SMALL_ERR_THRESH) yaw_rate *= SMALL_ERR_SCALE;
             target_yaw = normalize_angle_rad(target_yaw + yaw_rate * 0.0025f);
 
             float pitch_rate = y_pid.out * OUTER_PITCH_GAIN;
+            if (fabsf(delta_y_lpf) < SMALL_ERR_THRESH) pitch_rate *= SMALL_ERR_SCALE;
             target_pitch_x100 += pitch_rate * 0.0025f * 18000.0f / PI_F;
             if (target_pitch_x100 > 36000.0f) target_pitch_x100 = 36000.0f;
             if (target_pitch_x100 < 18000.0f) target_pitch_x100 = 18000.0f;
@@ -162,8 +163,7 @@ void StartVisionTask(void const * argument)
         } else {
             vision_output.active = 0;
             target_yaw_inited = 0;
-            target_pitch_inited = 0;
-            jc_set_abs_angle_x100(&hfdcan2, MOTOR2_ID, 27000);
+            /* PITCH: hold last position, avoid sudden jump */
         }
 
         osDelay(2);

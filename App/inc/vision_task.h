@@ -23,8 +23,8 @@
 #define VISION_LOST_CYCLES      100
 #define OUTER_YAW_GAIN           0.0050f
 #define OUTER_PITCH_GAIN         0.0100f
-#define YAW_LARGE_ERR_THRESH     100.0f   /* delta_x_lpf量程0~1000，100=10%偏离 */
-#define YAW_LARGE_ERR_SCALE      0.5f     /* 大误差时转速缩放比 */
+#define SMALL_ERR_THRESH         100.0f    /* 误差小于此值(量程0~1000)时降速 */
+#define SMALL_ERR_SCALE          0.5f     /* 接近目标时控制量缩放比 */
 
 typedef struct {
     uint8_t buffer[CDC_RX_BUF_SIZE];
