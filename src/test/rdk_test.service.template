@@ -1,0 +1,17 @@
+[Unit]
+Description=RDK Test Runner (test.py)
+After=network.target
+
+[Service]
+Type=simple
+User={{USER}}
+WorkingDirectory={{WORKDIR}}
+ExecStart=/usr/bin/python3 {{SCRIPT}}
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=rdk_test
+
+[Install]
+WantedBy=multi-user.target

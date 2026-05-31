@@ -1,0 +1,8 @@
+banana
+strawberry
+triangle
+square
+apple
+watermelon
+trapezoid
+target
