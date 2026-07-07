@@ -1287,6 +1287,11 @@
               <FilePath>..\Bsp\can_bsp.c</FilePath>
             </File>
             <File>
+              <FileName>qd4310.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Bsp\qd4310.c</FilePath>
+            </File>
+            <File>
               <FileName>w25q64.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Bsp\w25q64.c</FilePath>

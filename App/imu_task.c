@@ -4,7 +4,7 @@
 #include "tim.h"
 #include "vofa.h"
 #include "vision_task.h"
-#include "jc4310.h"
+#include "qd4310.h"
 #include "can_bsp.h"
 #include "pid.h"
 #include <math.h>
@@ -15,10 +15,8 @@
 #define KD          10.f
 #define MAX_OUT     500
 
-#define MOTOR1_ID               0x01
-#define MOTOR2_ID               0x01
-#define JC_MODE_SPEED           0x01
-#define JC_MODE_POSITION        0x02
+#define MOTOR1_ID               QD_DEFAULT_ID
+#define MOTOR2_ID               QD_DEFAULT_ID
 
 float gyro[3] = {0.0f};
 float acc[3] = {0.0f};
@@ -89,17 +87,18 @@ void ImuTask_Entry(void const * argument)
     /* Wait for system to fully boot, then init motors */
     osDelay(4000);
 
-    jc_enter_closed_loop(&hfdcan1, MOTOR1_ID);
+    /* QD4310: 使能电机(替代 jc_enter_closed_loop) */
+    qd_enable(&hfdcan1, MOTOR1_ID);
     osDelay(50);
-    jc_enter_closed_loop(&hfdcan2, MOTOR2_ID);
+    qd_enable(&hfdcan2, MOTOR2_ID);
     osDelay(50);
-    jc_set_control_mode(&hfdcan1, MOTOR1_ID, JC_MODE_SPEED);
+    /* QD4310 无独立模式切换, 直接使用对应命令控制 */
     osDelay(50);
-    jc_set_control_mode(&hfdcan2, MOTOR2_ID, JC_MODE_POSITION);
+    /* 设置绝对角度: 27000(0.01°) = 270° = 3π/2 rad */
+    qd_set_angle(&hfdcan2, MOTOR2_ID, 3.0f * PI_F / 2.0f);
     osDelay(50);
-    jc_set_abs_angle_x100(&hfdcan2, MOTOR2_ID, 27000);
-    osDelay(50);
-    jc_set_abs_angle_x100(&hfdcan1, MOTOR1_ID, 19500);
+    /* 设置绝对角度: 19500(0.01°) = 195° = 13π/12 rad */
+    qd_set_angle(&hfdcan1, MOTOR1_ID, 13.0f * PI_F / 12.0f);
     osDelay(50);
 
     /* Let IMU readings settle, then lock current yaw as target */
@@ -135,7 +134,8 @@ void ImuTask_Entry(void const * argument)
         float yaw_setpoint = vision_output.active ? vision_output.target_yaw : yaw_target;
         float yaw_error = angle_diff_rad(yaw_setpoint, imuAngle[INS_YAW_ADDRESS_OFFSET]);
         PID_Update(&yaw_pid, yaw_error, 0.0f, 0.001f);
-        jc_set_speed_rpm_x100(&hfdcan1, MOTOR1_ID, (int32_t)(yaw_pid.out * 100));
+        /* QD4310: 直接传入 rpm 浮点值 (原 jc_set_speed_rpm_x100 传 ×100 整数) */
+        qd_set_speed(&hfdcan1, MOTOR1_ID, yaw_pid.out);
         osDelay(1);
     }
     /* USER CODE END ImuTask_Entry */

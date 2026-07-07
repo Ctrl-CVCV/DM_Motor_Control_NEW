@@ -1,13 +1,13 @@
 #include "vision_task.h"
 #include "imu_task.h"
 #include "usbd_cdc_if.h"
-#include "jc4310.h"
+#include "qd4310.h"
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
 
 #define PI_F 3.14159265358979323846f
-#define MOTOR2_ID  0x01
+#define MOTOR2_ID  QD_DEFAULT_ID
 
 CDC_RxRingBuffer cdc_rx_buf = {0};
 VisionOutput vision_output = {0};
@@ -159,7 +159,8 @@ void StartVisionTask(void const * argument)
             vision_output.target_pitch = target_pitch_x100;
             vision_output.active = 1;
 
-            jc_set_abs_angle_x100(&hfdcan2, MOTOR2_ID, (int32_t)target_pitch_x100);
+            /* QD4310: 将 0.01° 转换为 rad (x100 * π / 18000) */
+            qd_set_angle(&hfdcan2, MOTOR2_ID, target_pitch_x100 * PI_F / 18000.0f);
         } else {
             vision_output.active = 0;
             target_yaw_inited = 0;
