@@ -159,7 +159,7 @@ void StartVisionTask(void const * argument)
             vision_output.target_pitch = target_pitch_x100;
             vision_output.active = 1;
 
-            /* QD4310: 将 0.01° 转换为 rad (x100 * π / 18000) */
+            /* 设置 MOTOR2 俯仰角度: target_pitch_x100 为 0.01° 单位, 转换为 rad */
             qd_set_angle(&hfdcan2, MOTOR2_ID, target_pitch_x100 * PI_F / 18000.0f);
         } else {
             vision_output.active = 0;

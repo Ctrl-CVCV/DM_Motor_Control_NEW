@@ -87,17 +87,16 @@ void ImuTask_Entry(void const * argument)
     /* Wait for system to fully boot, then init motors */
     osDelay(4000);
 
-    /* QD4310: 使能电机(替代 jc_enter_closed_loop) */
+    /* 使能两台 QD4310 电机 */
     qd_enable(&hfdcan1, MOTOR1_ID);
     osDelay(50);
     qd_enable(&hfdcan2, MOTOR2_ID);
     osDelay(50);
-    /* QD4310 无独立模式切换, 直接使用对应命令控制 */
     osDelay(50);
-    /* 设置绝对角度: 27000(0.01°) = 270° = 3π/2 rad */
+    /* 设置 MOTOR2 绝对角度: 270° (3π/2 rad) */
     qd_set_angle(&hfdcan2, MOTOR2_ID, 3.0f * PI_F / 2.0f);
     osDelay(50);
-    /* 设置绝对角度: 19500(0.01°) = 195° = 13π/12 rad */
+    /* 设置 MOTOR1 绝对角度: 195° (13π/12 rad) */
     qd_set_angle(&hfdcan1, MOTOR1_ID, 13.0f * PI_F / 12.0f);
     osDelay(50);
 
@@ -134,7 +133,7 @@ void ImuTask_Entry(void const * argument)
         float yaw_setpoint = vision_output.active ? vision_output.target_yaw : yaw_target;
         float yaw_error = angle_diff_rad(yaw_setpoint, imuAngle[INS_YAW_ADDRESS_OFFSET]);
         PID_Update(&yaw_pid, yaw_error, 0.0f, 0.001f);
-        /* QD4310: 直接传入 rpm 浮点值 (原 jc_set_speed_rpm_x100 传 ×100 整数) */
+        /* 设置 MOTOR1 转速 (rpm), 函数内部自动限幅到 ±1000rpm 并归一化 */
         qd_set_speed(&hfdcan1, MOTOR1_ID, yaw_pid.out);
         osDelay(1);
     }
