@@ -122,6 +122,7 @@ virtualFolder:
         - path: ../Bsp/w25q64.c
         - path: ../Bsp/jc4310.c
         - path: ../Bsp/pid.c
+        - path: ../Bsp/qd4310.c
       folders: []
     - name: App
       files:
@@ -168,7 +169,10 @@ targets:
         - .cmsis/include
         - RTE/_CtrBoard-H7_ALL
       libList: []
-    excludeList: []
+    excludeList:
+      - <virtual_root>/App/vision_task.c
+    settings:
+      debugger: cortex-debug
     toolchain: AC5
     toolchainConfigMap:
       AC5:

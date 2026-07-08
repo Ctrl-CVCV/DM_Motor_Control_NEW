@@ -38,7 +38,6 @@ uint8_t tx_data[8] = {0,1,2,3,4,5,6,7};
 void FunTest_Entry(void const * argument)
 {
     /* USER CODE BEGIN FunTest_Entry */
-    can_bsp_init();
     /* Infinite loop */
     for(;;)
     {
@@ -82,4 +81,3 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 //        HAL_UART_Receive_IT(&huart5, u5Rx, U5_RX_LEN);
 //    }
 }
-

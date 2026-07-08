@@ -34,7 +34,7 @@
 #include "vofa.h"
 #include "w25q64.h"
 #include "can_bsp.h"
-#include "jc4310.h"
+#include "qd4310.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 

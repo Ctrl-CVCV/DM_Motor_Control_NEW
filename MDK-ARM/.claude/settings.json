@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/迅雷下载/例程/使用CAN总线控制/STM32/C语言/**)",
+      "Read(//d/迅雷下载/**)"
+    ],
+    "additionalDirectories": [
+      "f:\\DM_Project\\USB_DEVICE\\App",
+      "f:\\DM_Project\\Bsp\\inc",
+      "f:\\DM_Project\\Bsp"
+    ]
+  }
+}
