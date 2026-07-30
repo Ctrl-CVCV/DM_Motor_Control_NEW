@@ -89,18 +89,18 @@ void ImuTask_Entry(void const * argument)
     /* Wait for system to fully boot, then init motors */
     osDelay(4000);
 
-    jc_enter_closed_loop(&hfdcan1, MOTOR1_ID);
-    osDelay(50);
-    jc_enter_closed_loop(&hfdcan2, MOTOR2_ID);
-    osDelay(50);
-    jc_set_control_mode(&hfdcan1, MOTOR1_ID, JC_MODE_SPEED);
-    osDelay(50);
-    jc_set_control_mode(&hfdcan2, MOTOR2_ID, JC_MODE_POSITION);
-    osDelay(50);
-    jc_set_abs_angle_x100(&hfdcan2, MOTOR2_ID, 27000);
-    osDelay(50);
-    jc_set_abs_angle_x100(&hfdcan1, MOTOR1_ID, 19500);
-    osDelay(50);
+//    jc_enter_closed_loop(&hfdcan1, MOTOR1_ID);
+//    osDelay(50);
+//    jc_enter_closed_loop(&hfdcan2, MOTOR2_ID);
+//    osDelay(50);
+//    jc_set_control_mode(&hfdcan1, MOTOR1_ID, JC_MODE_SPEED);
+//    osDelay(50);
+//    jc_set_control_mode(&hfdcan2, MOTOR2_ID, JC_MODE_POSITION);
+//    osDelay(50);
+//    jc_set_abs_angle_x100(&hfdcan2, MOTOR2_ID, 27000);
+//    osDelay(50);
+//    jc_set_abs_angle_x100(&hfdcan1, MOTOR1_ID, 19500);
+//    osDelay(50);
 
     /* Let IMU readings settle, then lock current yaw as target */
     osDelay(100);
@@ -135,7 +135,7 @@ void ImuTask_Entry(void const * argument)
         float yaw_setpoint = vision_output.active ? vision_output.target_yaw : yaw_target;
         float yaw_error = angle_diff_rad(yaw_setpoint, imuAngle[INS_YAW_ADDRESS_OFFSET]);
         PID_Update(&yaw_pid, yaw_error, 0.0f, 0.001f);
-        jc_set_speed_rpm_x100(&hfdcan1, MOTOR1_ID, (int32_t)(yaw_pid.out * 100));
+        //jc_set_speed_rpm_x100(&hfdcan1, MOTOR1_ID, (int32_t)(yaw_pid.out * 100));
         osDelay(1);
     }
     /* USER CODE END ImuTask_Entry */

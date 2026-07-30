@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//f/DM_Motor_Control_NEW/App/**)",
+      "Read(//f/DM_Motor_Control_NEW/**)"
+    ],
+    "additionalDirectories": [
+      "f:\\DM_Motor_Control_NEW\\App"
+    ]
+  }
+}

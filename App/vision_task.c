@@ -159,7 +159,7 @@ void StartVisionTask(void const * argument)
             vision_output.target_pitch = target_pitch_x100;
             vision_output.active = 1;
 
-            jc_set_abs_angle_x100(&hfdcan2, MOTOR2_ID, (int32_t)target_pitch_x100);
+            //jc_set_abs_angle_x100(&hfdcan2, MOTOR2_ID, (int32_t)target_pitch_x100);
         } else {
             vision_output.active = 0;
             target_yaw_inited = 0;
